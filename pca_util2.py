@@ -4,13 +4,9 @@ def testingfits():
 	import pylab as pl
 	import numpy as np
 	xtrans = load_timeseries_fits(all=True)
-	print np.shape(xtrans[xtrans>0])
-	onespec= xtrans[0,:,0]+1
-	print np.shape(onespec)
-	pl.plot(onespec/onespec.dot(onespec))
-	pl.savefig("test.png")
-	#mu = simple_mu(xtrans)
-	#print np.shape(mu)
+	mu = simple_mu(xtrans)
+	print np.shape(mu)
+
 
 def testingsvd():
 	from numpy import load,shape,linalg
@@ -51,7 +47,8 @@ def testingcode_1(saved="",mat=""):
 
 def simple_mu(xtrans):
 	from numpy import mean,shape
-	mu = mean(xtrans,axis=0)
+	'''Here we expect xtrans to be a 3D array'''
+	mu = mean(mean(xtrans,axis=0),axis=1)
 	mu = mu/(mu.dot(mu))
 	return mu
 
@@ -99,8 +96,9 @@ def load_mat(name):
 
 def load_timeseries_fits(name="DD2D_asym_01_dc2_mu014.fits",all=False):
 	import pyfits as pf
+	import pylab as pl
 	from numpy import float,zeros,shape,append
-	datadir = "/project/projectdirs/odetta/data/fits/fits_v001/"
+	datadir = "/Users/janos/Desktop/grad/pca/fits/fits_v001/"
 	if all:
 		import glob
 		fnames = glob.glob(datadir+"*")
@@ -108,9 +106,6 @@ def load_timeseries_fits(name="DD2D_asym_01_dc2_mu014.fits",all=False):
 		for ix,f in enumerate(fnames):
 			hud = pf.open(f)
 			data[:,:,ix]=hud[0].data
-			print shape(hud[0].data)
-			print data[:,:,ix]
-			break
 		return data
 	else:
 		hdu = pf.open(name)
