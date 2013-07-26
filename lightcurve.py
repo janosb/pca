@@ -1,9 +1,24 @@
-    
-def lc_point(wave,flux,filter_wave,filter_flux):
+
+def get_lightcurve(wave, fluxes, times, filter,plot=False):
+    filtx ,filty = get_filter(filter)
+    filter_interp = interpol_lin(filtx,filty,wave)
+    lc = []
+    for flux in fluxes:
+        lc.append(lc_point(wave,flux,wave,filter_interp))    
+    if plot:
+        from pylab import plot, clf,show,legend
+        clf()
+        plot(times, lc)
+        show()
+
+def lc_point(wave,flux,filter_wave,filter_flux,needs_interpol=True):
     from numpy import shape, where,trapz, log10
-    binning = check_binning(wave)
-    #interpolate filter onto model/data grid
-    filter_interp = interpol_lin(filter_wave,filter_flux,wave,plot=True)
+    #binning = check_binning(wave)
+    if needs_interpol:
+        #interpolate filter onto model/data grid
+        filter_interp = interpol_lin(filter_wave,filter_flux,wave,plot=False)
+    else:
+        filter_interp = filter_flux
     y1=[]
     y2=[]
     for i in range(len(wave)):
@@ -20,7 +35,7 @@ def lc_point(wave,flux,filter_wave,filter_flux):
 
 def interpol_lin(xin,yin,xout,plot=False):
     from scipy.interpolate import interp1d
-    f = interp1d(xin,yin,bounds_error=False,fill_value=0,kind=5)
+    f = interp1d(xin,yin,bounds_error=False,fill_value=0)
     yout = f(xout)
     if plot:
         import pylab as pl
@@ -40,16 +55,12 @@ def get_filter(filter):
     dir = '/Users/janos/Desktop/grad/odetta/lightcurve/landolt/'
     filter=filter.lower()
     if filter in ['ux','b','v','r','i']:
-        fname = dir+'s'+filter+'.dat'
+        fname = dir+'s'+filter+'-shifted.dat'
+        wave, T = np.genfromtxt(fname,unpack=True)
+        return wave,T
     else:
         'filter does not exist. choose from ux, b, v, r, i'
-    wave, T = np.genfromtxt(fname,unpack=True)
-    return wave,T
-        
-
-
-
-
+        return -1,-1
 
 
 
@@ -85,3 +96,14 @@ def test_spec():
     wave,flux=get_test_spec()
     filt_x,filt_y = get_filter('B')
     print lc_point(wave,flux,filt_x,filt_y)
+
+def test_lc():
+    from glob import glob
+    import numpy as np
+    fnames = glob("/Users/janos/Desktop/grad/odetta/lightcurve/bpgs/*")
+    fluxes = []
+    times = np.linspace(1,len(fnames),len(fnames))
+    for f in fnames:
+        wave, flux = np.genfromtxt(f, unpack=True)
+        fluxes.append(flux)
+    get_lightcurve(wave, fluxes,times, 'B',  plot=True)
